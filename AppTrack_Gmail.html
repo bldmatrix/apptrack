@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AppTrack">
+<title>AppTrack - Job Application Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+/* ── RESET & BASE ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:       #0a0a0f;
+  --surface:  #111118;
+  --surface2: #18181f;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.12);
+  --text:     #f0f0f5;
+  --muted:    #8888a0;
+  --accent:   #4f7cff;
+  --accent-dim:rgba(79,124,255,0.12);
+  --accent-border:rgba(79,124,255,0.35);
+  --green:    #22d3a0;
+  --green-dim:rgba(34,211,160,0.12);
+  --orange:   #f5a623;
+  --orange-dim:rgba(245,166,35,0.12);
+  --red:      #ff4d4d;
+  --red-dim:  rgba(255,77,77,0.12);
+  --purple:   #c084fc;
+  --purple-dim:rgba(192,132,252,0.12);
+  --gray-dim: rgba(136,136,160,0.1);
+  --radius:   14px;
+  --radius-sm:9px;
+  --font-head:'Syne',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+}
+html{height:100%;-webkit-font-smoothing:antialiased}
+body{
+  font-family:var(--font-body);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100dvh;
+  font-size:15px;
+  line-height:1.5;
+  overflow-x:hidden;
+}
+input,select,textarea,button{font-family:var(--font-body);font-size:14px}
+button{cursor:pointer}
+a{color:var(--accent)}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
+
+/* ── LAYOUT ── */
+#root{display:flex;flex-direction:column;min-height:100dvh;max-width:480px;margin:0 auto}
+.page{display:none;flex:1;flex-direction:column;animation:fadeUp .2s ease}
+.page.active{display:flex}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+/* ── HEADER ── */
+.header{
+  position:sticky;top:0;z-index:50;
+  background:rgba(10,10,15,.92);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:14px 18px;
+}
+.header-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-mark{
+  width:34px;height:34px;border-radius:10px;
+  background:linear-gradient(135deg,var(--accent) 0%,#7c5cfc 100%);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-head);font-size:16px;font-weight:800;color:#fff;
+  flex-shrink:0;
+}
+.logo-name{font-family:var(--font-head);font-size:17px;font-weight:700;letter-spacing:-.3px}
+.logo-tag{font-size:10px;color:var(--muted);font-family:var(--font-mono);margin-top:0px}
+.header-actions{display:flex;gap:6px;align-items:center}
+
+/* ── STATS BAR ── */
+.stats-bar{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+  padding:14px 18px 0;
+}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:10px 12px;text-align:center;
+}
+.stat-val{font-family:var(--font-head);font-size:22px;font-weight:700;line-height:1}
+.stat-lbl{font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:.3px;text-transform:uppercase}
+
+/* ── FILTER BAR ── */
+.filter-bar{
+  display:flex;gap:6px;padding:14px 18px 0;
+  overflow-x:auto;scrollbar-width:none;
+}
+.filter-bar::-webkit-scrollbar{display:none}
+.filter-pill{
+  flex-shrink:0;padding:6px 14px;border-radius:99px;
+  border:1px solid var(--border2);background:transparent;
+  color:var(--muted);font-size:12px;font-weight:500;
+  transition:all .15s;
+}
+.filter-pill.active{background:var(--accent-dim);border-color:var(--accent-border);color:var(--accent)}
+.filter-pill:hover:not(.active){background:var(--surface2);color:var(--text)}
+
+/* ── SEARCH ── */
+.search-wrap{padding:10px 18px 0;position:relative}
+.search-wrap input{
+  width:100%;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:10px 14px 10px 38px;
+  color:var(--text);outline:none;transition:border-color .15s;
+}
+.search-wrap input:focus{border-color:var(--accent-border)}
+.search-wrap input::placeholder{color:var(--muted)}
+.search-icon{position:absolute;left:30px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px;pointer-events:none}
+
+/* ── SYNC INFO ── */
+.sync-row{display:flex;justify-content:space-between;padding:8px 18px 0;font-size:11px;color:var(--muted);font-family:var(--font-mono)}
+
+/* ── CARDS ── */
+.cards{padding:12px 18px;display:flex;flex-direction:column;gap:8px;flex:1}
+.company-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;
+  cursor:pointer;transition:border-color .15s,transform .1s;
+}
+.company-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.company-card:active{transform:translateY(0)}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.card-left{display:flex;gap:10px;align-items:center;min-width:0}
+.avatar{
+  width:38px;height:38px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-head);font-size:16px;font-weight:700;
+  flex-shrink:0;
+}
+.card-name{font-weight:500;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card-role{font-size:12px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.status-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:11px;font-weight:600;padding:4px 10px;border-radius:99px;
+  flex-shrink:0;white-space:nowrap;font-family:var(--font-mono);
+}
+.badge-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.card-bottom{
+  display:flex;justify-content:space-between;
+  margin-top:10px;padding-top:10px;
+  border-top:1px solid var(--border);
+  font-size:11px;color:var(--muted);font-family:var(--font-mono);
+}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:4rem 2rem;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.empty-icon{font-size:40px;margin-bottom:16px;opacity:.3}
+.empty-title{font-family:var(--font-head);font-size:16px;font-weight:600;margin-bottom:6px}
+.empty-sub{font-size:13px;color:var(--muted)}
+
+/* ── BOTTOM ACTIONS ── */
+.bottom-actions{padding:14px 18px;display:flex;gap:8px;border-top:1px solid var(--border)}
+
+/* ── BUTTONS ── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px 18px;border-radius:var(--radius-sm);border:1px solid var(--border2);
+  background:var(--surface2);color:var(--text);font-size:13px;font-weight:500;
+  transition:all .15s;
+}
+.btn:hover{background:var(--surface);border-color:var(--border2)}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--accent);border-color:transparent;color:#fff}
+.btn-primary:hover{background:#3d6eee;border-color:transparent}
+.btn-success{background:var(--green-dim);border-color:rgba(34,211,160,.3);color:var(--green)}
+.btn-danger{background:var(--red-dim);border-color:rgba(255,77,77,.3);color:var(--red)}
+.btn-full{width:100%}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-icon{padding:8px;border-radius:var(--radius-sm)}
+
+/* ── FORM ── */
+.form-group{margin-bottom:14px}
+.form-label{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px}
+.form-input{
+  width:100%;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:10px 14px;color:var(--text);outline:none;
+  transition:border-color .15s;
+}
+.form-input:focus{border-color:var(--accent-border)}
+.form-input::placeholder{color:var(--muted)}
+.form-input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5)}
+select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+textarea.form-input{resize:vertical;min-height:80px;line-height:1.5}
+.form-err{font-size:12px;color:var(--red);margin-top:8px;text-align:center}
+
+/* ── PAGE HEADER ── */
+.page-head{padding:16px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+.page-head-title{font-family:var(--font-head);font-size:16px;font-weight:700}
+.page-body{padding:18px;flex:1;overflow-y:auto}
+
+/* ── DETAIL ── */
+.detail-company-header{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.detail-avatar{width:52px;height:52px;border-radius:14px;font-size:22px;font-family:var(--font-head);font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.detail-name{font-family:var(--font-head);font-size:18px;font-weight:700}
+.detail-role{font-size:13px;color:var(--muted);margin-top:3px}
+.section-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+.info-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px;font-size:13px}
+.info-row{display:flex;align-items:center;gap:8px;color:var(--muted);padding:3px 0}
+.info-row span{color:var(--text)}
+.status-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+
+/* ── PARSE PREVIEW ── */
+.parse-preview{
+  background:var(--surface);border:1px solid var(--accent-border);
+  border-radius:var(--radius);padding:16px;margin:12px 0;
+  animation:fadeUp .2s ease;
+}
+.parse-preview-name{font-family:var(--font-head);font-size:16px;font-weight:700;margin-bottom:4px}
+.parse-preview-role{font-size:13px;color:var(--muted);margin-bottom:12px}
+
+/* ── SETTINGS ── */
+.settings-section{margin-bottom:24px}
+.settings-title{font-family:var(--font-head);font-size:13px;font-weight:700;margin-bottom:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.api-key-hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.6}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--surface2);border:1px solid var(--border2);
+  color:var(--text);padding:10px 20px;border-radius:99px;
+  font-size:13px;font-weight:500;
+  opacity:0;transition:all .25s;z-index:9999;white-space:nowrap;
+  pointer-events:none;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── LOADER ── */
+.loader{width:18px;height:18px;border:2px solid rgba(255,255,255,.15);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+
+/* ── DIVIDER ── */
+.divider{height:1px;background:var(--border);margin:16px 0}
+
+/* ── RESPONSIVE ── */
+@media(min-width:480px){
+  body{background:#050508}
+  #root{background:var(--bg);border-left:1px solid var(--border);border-right:1px solid var(--border);min-height:100dvh}
+}
+
+/* ONBOARDING */
+.ob-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center}
+.ob-mark{width:80px;height:80px;border-radius:24px;background:linear-gradient(135deg,#4f7cff,#7c5cfc);display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:36px;font-weight:800;color:#fff;margin:0 auto 22px}
+.feat{display:flex;align-items:center;gap:12px;text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;width:100%;max-width:340px}
+.feat-icon{font-size:22px;width:36px;text-align:center;flex-shrink:0}
+.feat-t{font-weight:500;font-size:13px}
+.feat-s{font-size:12px;color:var(--muted);margin-top:2px}
+.g-signin{background:#fff;border:1px solid rgba(0,0,0,.15);border-radius:var(--radius-sm);padding:12px 20px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s;width:100%;max-width:340px;font-family:var(--font-body);margin-bottom:10px}
+.g-signin:hover{background:#f8f8f8;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.g-text{font-size:14px;font-weight:500;color:#1f1f1f}
+.wiz-step{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px;margin-bottom:10px}
+.wiz-n{width:26px;height:26px;border-radius:50%;background:var(--accent-dim);border:1px solid var(--accent-border);color:var(--accent);font-family:var(--font-mono);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.wiz-t{font-weight:500;font-size:13px;margin-bottom:3px}
+.wiz-s{font-size:12px;color:var(--muted);line-height:1.6}
+.conn-badge{display:inline-flex;align-items:center;gap:5px;background:var(--green-dim);border:1px solid var(--green-border);color:var(--green);border-radius:99px;padding:3px 10px;font-size:11px;font-weight:600;font-family:var(--font-mono)}
+.sync-progress{padding:10px 18px;background:var(--accent-dim);border-top:1px solid var(--accent-border);display:none;align-items:center;justify-content:space-between;font-size:12px;color:var(--accent)}
+.spin-ico{width:16px;height:16px;border:2px solid rgba(79,124,255,.3);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px}
+</style>
+</head>
+<body>
+<div id="root">
+
+<!-- ONBOARDING -->
+<div id="pg-onboard" class="page active">
+  <div class="ob-wrap">
+    <div class="ob-mark">A</div>
+    <div style="font-family:var(--font-head);font-size:26px;font-weight:800;margin-bottom:8px">AppTrack</div>
+    <div style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:24px;max-width:300px">Connect your Gmail once. All your job applications organized automatically — every day.</div>
+    <div class="feat"><div class="feat-icon">📂</div><div><div class="feat-t">Auto company folders</div><div class="feat-s">Baker Hughes, Thales, GE Vernova — each auto-detected</div></div></div>
+    <div class="feat"><div class="feat-icon">🤖</div><div><div class="feat-t">AI email classification</div><div class="feat-s">Applications, cold outreach, recruiters — sorted automatically</div></div></div>
+    <div class="feat"><div class="feat-icon">🔄</div><div><div class="feat-t">Daily Gmail sync</div><div class="feat-s">Opens fresh with new emails already organized</div></div></div>
+    <div class="feat"><div class="feat-icon">🔒</div><div><div class="feat-t">Read-only & private</div><div class="feat-s">Your emails never stored on any server</div></div></div>
+    <br>
+    <button class="g-signin" onclick="goTo('pg-setup')">
+      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.6 33.3 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 2.9l5.7-5.7C34.5 6.5 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 16.1 19 13 24 13c3.1 0 5.8 1.1 8 2.9l5.7-5.7C34.5 6.5 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.4 35.4 26.8 36 24 36c-5.3 0-9.7-3.6-11.3-8.5l-6.5 5C9.5 39.5 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.4-2.4 4.4-4.4 5.8l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.7-.4-3.9z"/></svg>
+      <span class="g-text">Connect Gmail &amp; Get Started</span>
+    </button>
+    <div style="font-size:11px;color:var(--muted)">Or <a href="#" onclick="skipOnboard();return false" style="color:var(--accent)">use without Gmail</a> (manual only)</div>
+  </div>
+</div>
+
+<!-- SETUP WIZARD -->
+<div id="pg-setup" class="page">
+  <div class="header">
+    <div class="header-row">
+      <div class="logo"><div class="logo-mark">A</div><div><div class="logo-name">AppTrack</div><div class="logo-tag">Gmail Setup</div></div></div>
+      <button class="btn btn-sm" onclick="goTo('pg-onboard')">← Back</button>
+    </div>
+  </div>
+  <div class="page-body" style="padding:18px">
+    <div style="font-family:var(--font-head);font-size:17px;font-weight:700;margin-bottom:6px">One-time setup — 5 minutes</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.7">After this, just tap <strong style="color:var(--text)">Sync Gmail</strong> and your emails auto-organize. You never repeat this step.</div>
+    <div class="wiz-step"><div class="wiz-n">1</div><div><div class="wiz-t">Open Google Cloud Console</div><div class="wiz-s">Go to <a href="https://console.cloud.google.com" target="_blank" style="color:var(--accent)">console.cloud.google.com</a> and sign in with your Gmail.</div></div></div>
+    <div class="wiz-step"><div class="wiz-n">2</div><div><div class="wiz-t">Create a new project</div><div class="wiz-s">Top dropdown → New Project → name it <strong style="color:var(--text)">AppTrack</strong> → Create.</div></div></div>
+    <div class="wiz-step"><div class="wiz-n">3</div><div><div class="wiz-t">Enable Gmail API</div><div class="wiz-s">Left menu → APIs &amp; Services → Library → search <strong style="color:var(--text)">Gmail API</strong> → Enable.</div></div></div>
+    <div class="wiz-step"><div class="wiz-n">4</div><div><div class="wiz-t">Configure OAuth consent screen</div><div class="wiz-s">APIs &amp; Services → OAuth consent screen → External → fill App name (<strong style="color:var(--text)">AppTrack</strong>) and your email → Save. Add scope: <strong style="color:var(--text)">gmail.readonly</strong>. Add yourself as Test User.</div></div></div>
+    <div class="wiz-step"><div class="wiz-n">5</div><div><div class="wiz-t">Create OAuth Client ID</div><div class="wiz-s">Credentials → Create Credentials → OAuth client ID → Web application.<br>Under <strong style="color:var(--text)">Authorised JavaScript origins</strong>, add your app URL (e.g. <code style="font-size:11px;color:var(--accent)">https://yourusername.github.io</code>).<br>Also add <code style="font-size:11px;color:var(--accent)">http://localhost</code> for testing.</div></div></div>
+    <div class="wiz-step"><div class="wiz-n">6</div><div><div class="wiz-t">Copy your Client ID below</div><div class="wiz-s">From Credentials page, copy the Client ID — it looks like: <code style="font-size:11px;color:var(--accent)">123456789-abc...apps.googleusercontent.com</code></div></div></div>
+    <div class="form-group" style="margin-top:4px"><label class="form-label">Google OAuth Client ID</label><input type="text" id="cid-inp" class="form-input" placeholder="123456789-abc...apps.googleusercontent.com"></div>
+    <button class="btn btn-primary btn-full" onclick="saveAndConnect()">Connect Gmail →</button>
+    <div class="form-err" id="cid-err"></div>
+    <div style="font-size:11px;color:var(--dim);text-align:center;margin-top:14px;line-height:1.7">AppTrack requests <strong style="color:var(--muted)">read-only</strong> Gmail access only.<br>Emails are never stored on any external server.</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="pg-main" class="page">
+  <div class="header">
+    <div class="header-row">
+      <div class="logo"><div class="logo-mark">A</div><div><div class="logo-name">AppTrack</div><div class="logo-tag" id="h-tag">Job Intelligence</div></div></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <div class="conn-badge" id="user-badge" style="display:none"><span style="width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block"></span><span id="user-lbl">Gmail</span></div>
+        <button class="btn btn-sm" onclick="doSync()" id="sync-btn">&#8635; Sync</button>
+        <button class="btn btn-sm" onclick="goTo('pg-settings')" style="padding:6px 8px">&#9881;</button>
+        <button class="btn btn-sm" onclick="toggleLang()" id="lang-btn">&#127470;&#127481; IT</button>
+      </div>
+    </div>
+  </div>
+  <div class="sync-progress" id="sync-bar">
+    <span><span class="spin-ico"></span><span id="sync-msg">Scanning Gmail…</span></span>
+    <span id="sync-pct" style="font-family:var(--font-mono);font-size:11px">0%</span>
+  </div>
+  <div class="stats-bar">
+    <div class="stat-card"><div class="stat-val" id="s-apps" style="color:var(--accent)">0</div><div class="stat-lbl" id="s-apps-l">Applications</div></div>
+    <div class="stat-card"><div class="stat-val" id="s-int" style="color:var(--orange)">0</div><div class="stat-lbl" id="s-int-l">Interviews</div></div>
+    <div class="stat-card"><div class="stat-val" id="s-out" style="color:var(--muted)">0</div><div class="stat-lbl" id="s-out-l">Outreach</div></div>
+  </div>
+  <div class="filter-bar">
+    <button class="filter-pill active" id="fp-all" onclick="setFilter('all')">All</button>
+    <button class="filter-pill" id="fp-ja" onclick="setFilter('job_application')">Applications</button>
+    <button class="filter-pill" id="fp-co" onclick="setFilter('cold_outreach')">Cold outreach</button>
+    <button class="filter-pill" id="fp-rc" onclick="setFilter('recruiter_contact')">Recruiters</button>
+  </div>
+  <div class="search-wrap"><span class="search-icon">&#128269;</span><input type="text" id="search-inp" placeholder="Search companies…" oninput="renderCards()"></div>
+  <div class="sync-row"><span id="meta-count">0 companies</span><span id="meta-time"></span></div>
+  <div class="cards" id="cards-wrap"></div>
+  <div class="empty" id="empty-state">
+    <div class="empty-icon">&#128194;</div>
+    <div class="empty-title" id="empty-t">No applications yet</div>
+    <div class="empty-sub" id="empty-s">Tap Sync to scan Gmail, or add manually</div>
+  </div>
+  <div class="bottom-actions">
+    <button class="btn" style="flex:1" onclick="goTo('pg-add')">&#65291; Add manually</button>
+    <button class="btn btn-primary" style="flex:1" onclick="goTo('pg-paste')">&#9993; Paste email</button>
+  </div>
+</div>
+
+<!-- ADD -->
+<div id="pg-add" class="page">
+  <div class="page-head"><button class="btn btn-sm btn-icon" onclick="goTo('pg-main')">&#8592;</button><div class="page-head-title">Add company</div></div>
+  <div class="page-body">
+    <div class="form-group"><label class="form-label">Company name *</label><input type="text" id="f-name" class="form-input" placeholder="e.g. Baker Hughes"></div>
+    <div class="form-group"><label class="form-label">Role / job title</label><input type="text" id="f-role" class="form-input" placeholder="e.g. Stage Project Planner"></div>
+    <div class="form-group"><label class="form-label">Contact name</label><input type="text" id="f-cont" class="form-input" placeholder="e.g. Maria Rossi"></div>
+    <div class="form-group"><label class="form-label">Contact email</label><input type="email" id="f-cemail" class="form-input" placeholder="recruiter@company.com"></div>
+    <div class="form-group"><label class="form-label">Type</label><select id="f-type" class="form-input"><option value="job_application">Job application</option><option value="cold_outreach">Cold outreach</option><option value="recruiter_contact">Recruiter contact</option></select></div>
+    <div class="form-group"><label class="form-label">Status</label><select id="f-status" class="form-input"><option value="applied">Applied</option><option value="awaiting">Awaiting reply</option><option value="interview">Interview</option><option value="offer">Offer received</option><option value="rejected">Rejected</option><option value="cold_sent">Cold sent</option></select></div>
+    <div class="form-group"><label class="form-label">Date</label><input type="date" id="f-date" class="form-input"></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea id="f-notes" class="form-input" placeholder="Interview prep, next steps…"></textarea></div>
+    <button class="btn btn-primary btn-full" onclick="submitManual()">&#10003; Add company</button>
+    <div class="form-err" id="add-err"></div>
+  </div>
+</div>
+
+<!-- PASTE -->
+<div id="pg-paste" class="page">
+  <div class="page-head"><button class="btn btn-sm btn-icon" onclick="goTo('pg-main')">&#8592;</button><div class="page-head-title">Paste email</div></div>
+  <div class="page-body">
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.7">Copy any job or recruiter email from Gmail and paste below. AI extracts company, role, contact, and status automatically.</p>
+    <div class="form-group"><label class="form-label">Email text</label><textarea id="parse-inp" class="form-input" rows="9" placeholder="Dear Zaid, Thank you for applying to Baker Hughes for the Stage Project Planner role…"></textarea></div>
+    <div id="parse-prev" style="display:none"></div>
+    <button class="btn btn-primary btn-full" onclick="parseEmail()" id="parse-btn">&#10022; Extract &amp; add</button>
+    <div id="parse-msg" style="font-size:12px;text-align:center;margin-top:8px"></div>
+  </div>
+</div>
+
+<!-- DETAIL -->
+<div id="pg-detail" class="page">
+  <div class="page-head"><button class="btn btn-sm btn-icon" onclick="goTo('pg-main')">&#8592;</button><div class="page-head-title">Details</div></div>
+  <div class="page-body" id="det-body"></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="pg-settings" class="page">
+  <div class="page-head"><button class="btn btn-sm btn-icon" onclick="goTo('pg-main')">&#8592;</button><div class="page-head-title">Settings</div></div>
+  <div class="page-body">
+    <div style="margin-bottom:18px">
+      <div class="section-label">Gmail connection</div>
+      <div class="info-box" style="margin-bottom:10px">
+        <div class="info-row">&#9993; <span id="set-email">Not connected</span></div>
+        <div class="info-row">&#128273; <span id="set-cid">No Client ID</span></div>
+        <div class="info-row">&#128337; Last sync: <span id="set-sync">Never</span></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" style="flex:1" onclick="goTo('pg-setup')">Change setup</button>
+        <button class="btn btn-sm btn-danger" style="flex:1" onclick="disconnectGmail()">Disconnect</button>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div style="margin-bottom:18px">
+      <div class="section-label">Auto-sync</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.6">AppTrack syncs Gmail automatically when you open the app (if connected).</div>
+      <button class="btn btn-full" onclick="doSync()">&#8635; Sync now</button>
+    </div>
+    <div class="divider"></div>
+    <div style="margin-bottom:18px">
+      <div class="section-label">Export</div>
+      <button class="btn btn-full" onclick="exportData()">&#8659; Export all data as JSON</button>
+    </div>
+    <div class="divider"></div>
+    <div>
+      <div class="section-label" style="color:var(--red)">Danger zone</div>
+      <button class="btn btn-danger btn-full" onclick="clearAll()">&#128465; Delete all data</button>
+    </div>
+  </div>
+</div>
+
+</div>
+<div id="toast"></div>
+
+<script>
+const TODAY=()=>new Date().toISOString().split("T")[0];
+const GMAIL_API="https://gmail.googleapis.com/gmail/v1/users/me";
+
+let DATA={companies:[],lang:"en",filter:"all",clientId:"",accessToken:"",tokenExpiry:0,userEmail:"",lastSync:""};
+function load(){try{const s=localStorage.getItem("at2");if(s)Object.assign(DATA,JSON.parse(s));}catch(e){}}
+function save(){localStorage.setItem("at2",JSON.stringify(DATA));}
+
+const ST={
+  applied:{bg:"var(--accent-dim)",bc:"var(--accent-border)",c:"var(--accent)",ab:"rgba(79,124,255,.15)",af:"var(--accent)"},
+  awaiting:{bg:"rgba(136,136,160,.07)",bc:"var(--border2)",c:"var(--muted)",ab:"rgba(136,136,160,.1)",af:"var(--muted)"},
+  interview:{bg:"var(--orange-dim)",bc:"rgba(245,166,35,.3)",c:"var(--orange)",ab:"rgba(245,166,35,.15)",af:"var(--orange)"},
+  offer:{bg:"var(--green-dim)",bc:"rgba(34,211,160,.3)",c:"var(--green)",ab:"rgba(34,211,160,.15)",af:"var(--green)"},
+  rejected:{bg:"var(--red-dim)",bc:"rgba(255,77,77,.3)",c:"var(--red)",ab:"rgba(255,77,77,.15)",af:"var(--red)"},
+  cold_sent:{bg:"var(--purple-dim)",bc:"rgba(192,132,252,.3)",c:"var(--purple)",ab:"rgba(192,132,252,.1)",af:"var(--purple)"},
+};
+
+const LNG={
+  en:{apps:"Applications",interviews:"Interviews",outreach:"Outreach",all:"All",ja:"Applications",co:"Cold outreach",rc:"Recruiters",applied:"Applied",awaiting:"Awaiting",interview:"Interview",offer:"Offer ✓",rejected:"Rejected",cold_sent:"Cold sent",typeJa:"Job application",typeCo:"Cold outreach",typeRc:"Recruiter",count:n=>`${n} compan${n===1?"y":"ies"}`,emptyT:"No applications yet",emptyS:"Tap Sync to scan Gmail, or add manually",langBtn:"🇮🇹 IT",noResults:"No companies match",syncBtn:"↻ Sync",toastAdded:n=>`${n} added`,toastDel:"Deleted",toastSync:n=>`Synced — ${n} companies`,toastExp:"Exported",toastClear:"All data deleted",toastDisc:"Gmail disconnected"},
+  it:{apps:"Candidature",interviews:"Colloqui",outreach:"Contatti",all:"Tutti",ja:"Candidature",co:"Contatti freddi",rc:"Recruiter",applied:"Candidato",awaiting:"In attesa",interview:"Colloquio",offer:"Offerta ✓",rejected:"Rifiutato",cold_sent:"Inviato",typeJa:"Candidatura",typeCo:"Contatto freddo",typeRc:"Recruiter",count:n=>`${n} azien${n===1?"da":"de"}`,emptyT:"Nessuna candidatura",emptyS:"Tocca Sincronizza o aggiungi manualmente",langBtn:"🇬🇧 EN",noResults:"Nessuna azienda trovata",syncBtn:"↻ Sincronizza",toastAdded:n=>`${n} aggiunto`,toastDel:"Eliminato",toastSync:n=>`Sincronizzato — ${n} aziende`,toastExp:"Esportato",toastClear:"Dati eliminati",toastDisc:"Gmail disconnesso"},
+};
+const t=(k,...a)=>{const v=LNG[DATA.lang][k];return typeof v==="function"?v(...a):(v||k);};
+
+let cur="pg-onboard";
+function goTo(id){document.getElementById(cur).classList.remove("active");document.getElementById(id).classList.add("active");cur=id;if(id==="pg-settings")refreshSettings();if(id==="pg-main"){renderCards();updateStats();}}
+function skipOnboard(){goTo("pg-main");renderCards();updateStats();}
+
+// OAUTH PKCE
+function genVerifier(){const a=new Uint8Array(32);crypto.getRandomValues(a);return btoa(String.fromCharCode(...a)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=/g,"");}
+async function genChallenge(v){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(v));return btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=/g,"");}
+
+function saveAndConnect(){
+  const v=document.getElementById("cid-inp").value.trim();
+  if(!v||!v.includes("googleusercontent.com")){document.getElementById("cid-err").textContent="Please enter a valid Google Client ID";return;}
+  DATA.clientId=v;save();startOAuth();
+}
+
+async function startOAuth(){
+  if(!DATA.clientId){goTo("pg-setup");return;}
+  const verifier=genVerifier();
+  const challenge=await genChallenge(verifier);
+  sessionStorage.setItem("pkce_v",verifier);
+  const p=new URLSearchParams({client_id:DATA.clientId,redirect_uri:location.origin+location.pathname,response_type:"code",scope:"https://www.googleapis.com/auth/gmail.readonly email profile",code_challenge:challenge,code_challenge_method:"S256",access_type:"offline",prompt:"consent"});
+  location.href="https://accounts.google.com/o/oauth2/v2/auth?"+p;
+}
+
+async function handleCallback(){
+  const p=new URLSearchParams(location.search);
+  const code=p.get("code"),err=p.get("error");
+  if(err){toast("Auth failed: "+err);goTo("pg-setup");return;}
+  if(!code)return;
+  history.replaceState({},"",location.pathname);
+  const verifier=sessionStorage.getItem("pkce_v");
+  if(!verifier){goTo("pg-setup");return;}
+  try{
+    const r=await fetch("https://oauth2.googleapis.com/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({client_id:DATA.clientId,code,code_verifier:verifier,grant_type:"authorization_code",redirect_uri:location.origin+location.pathname})});
+    const d=await r.json();
+    if(d.access_token){DATA.accessToken=d.access_token;DATA.tokenExpiry=Date.now()+(d.expires_in*1000);save();sessionStorage.removeItem("pkce_v");await fetchUser();goTo("pg-main");doSync();}
+    else throw new Error(d.error_description||"Failed");
+  }catch(e){toast("Connection failed. Try again.");goTo("pg-setup");}
+}
+
+async function fetchUser(){
+  try{const r=await fetch("https://www.googleapis.com/oauth2/v2/userinfo",{headers:{Authorization:"Bearer "+DATA.accessToken}});const d=await r.json();if(d.email){DATA.userEmail=d.email;save();}}catch(e){}
+}
+
+function tokenOK(){return DATA.accessToken&&DATA.tokenExpiry&&Date.now()<DATA.tokenExpiry-60000;}
+async function gFetch(url){const r=await fetch(url,{headers:{Authorization:"Bearer "+DATA.accessToken}});if(r.status===401){DATA.accessToken="";save();throw new Error("expired");}return r.json();}
+
+// GMAIL SYNC
+const QUERIES=["subject:(application OR candidatura OR applying)","subject:(interview OR colloquio)","subject:(offer OR offerta OR congratulations)","subject:(rejected OR rejection OR rifiutato)","subject:(recruiter OR recruiting OR talent)","subject:(stage OR internship OR tirocinio)","label:sent subject:(candidatura OR application)","label:sent subject:(recruiter OR talent OR hiring)","from:(workday OR greenhouse OR lever OR smartrecruiters)"];
+
+async function doSync(){
+  if(!tokenOK()){if(DATA.clientId)startOAuth();else goTo("pg-setup");return;}
+  const bar=document.getElementById("sync-bar"),msgEl=document.getElementById("sync-msg"),pctEl=document.getElementById("sync-pct"),btn=document.getElementById("sync-btn");
+  bar.style.display="flex";btn.disabled=true;btn.textContent="…";
+  const msgs=new Map();
+  for(let i=0;i<QUERIES.length;i++){
+    pctEl.textContent=Math.round(i/QUERIES.length*50)+"%";msgEl.textContent="Scanning Gmail… "+(i+1)+"/"+QUERIES.length;
+    try{const u=GMAIL_API+"/messages?q="+encodeURIComponent(QUERIES[i])+"&maxResults=100";const r=await gFetch(u);if(r.messages)r.messages.forEach(m=>msgs.set(m.id,null));}catch(e){}
+  }
+  const ids=[...msgs.keys()];const details=[];
+  for(let i=0;i<ids.length;i+=10){
+    pctEl.textContent=Math.round(50+i/ids.length*45)+"%";msgEl.textContent="Reading emails… "+i+"/"+ids.length;
+    const batch=ids.slice(i,i+10);
+    const res=await Promise.allSettled(batch.map(id=>gFetch(GMAIL_API+"/messages/"+id+"?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date")));
+    res.forEach(r=>{if(r.status==="fulfilled"&&r.value)details.push(r.value);});
+  }
+  msgEl.textContent="Organizing…";pctEl.textContent="95%";
+
+  const cmap=new Map();
+  for(const msg of details){
+    const parsed=parseMsg(msg);
+    if(!parsed||!parsed.company)continue;
+    const key=parsed.company.toLowerCase().replace(/\s+/g," ").trim();
+    if(!cmap.has(key)){cmap.set(key,{id:"gm_"+key.replace(/[^a-z0-9]/g,"_"),name:parsed.company,role:parsed.role||"",contact:parsed.contact||"",cemail:parsed.cemail||"",type:parsed.type,status:parsed.status,date:parsed.date,notes:"",source:"gmail",emailCount:0});}
+    const ex=cmap.get(key);ex.emailCount++;
+    const pri={offer:5,interview:4,rejected:3,awaiting:2,applied:1,cold_sent:0};
+    if((pri[parsed.status]||0)>(pri[ex.status]||0))ex.status=parsed.status;
+    if(!ex.role&&parsed.role)ex.role=parsed.role;
+    if(!ex.contact&&parsed.contact)ex.contact=parsed.contact;
+    if(!ex.cemail&&parsed.cemail)ex.cemail=parsed.cemail;
+    if(parsed.date>ex.date)ex.date=parsed.date;
+  }
+
+  const manual=DATA.companies.filter(c=>c.source!=="gmail");
+  const gmailCos=[...cmap.values()];
+  gmailCos.forEach(gc=>{const ex=DATA.companies.find(c=>c.id===gc.id);if(ex){gc.notes=ex.notes||"";if(ex.statusOverride)gc.status=ex.statusOverride;}});
+  DATA.companies=[...manual,...gmailCos];
+  DATA.lastSync=new Date().toLocaleString();save();
+  bar.style.display="none";btn.disabled=false;btn.textContent=t("syncBtn");
+  updateStats();renderCards();updateBadge();
+  document.getElementById("meta-time").textContent="Synced "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+  toast(t("toastSync",gmailCos.length));
+}
+
+function parseMsg(msg){
+  const hdrs={};(msg.payload?.headers||[]).forEach(h=>{hdrs[h.name.toLowerCase()]=h.value;});
+  const sub=hdrs["subject"]||"",from=hdrs["from"]||"",dateStr=hdrs["date"]||"";
+  let date=TODAY();try{const d=new Date(dateStr);if(!isNaN(d))date=d.toISOString().split("T")[0];}catch(e){}
+  const fromEmail=(from.match(/<([^>]+)>/)||[,""])[1]||from.match(/[\w.\-+]+@[\w.\-]+\.[a-z]{2,}/)?.[0]||"";
+  const fromName=from.replace(/<[^>]+>/,"").replace(/"/g,"").trim();
+  const fromDomain=fromEmail.split("@")[1]||"";
+  const isMe=DATA.userEmail&&fromEmail.toLowerCase()===DATA.userEmail.toLowerCase();
+  const SKIP=/newsletter|unsubscribe|invoice|receipt|bank|payment|order|shipping|amazon|promo|sale|password|verify|security/i;
+  if(SKIP.test(sub)&&!/job|application|candidatura|interview|colloquio|offer|stage|recruiter/i.test(sub))return null;
+
+  let type=isMe?"cold_outreach":"job_application";
+  if(!isMe&&/recruiter|talent acquisition|headhunter|staffing/i.test(from+sub))type="recruiter_contact";
+
+  const subL=sub.toLowerCase();
+  let status=isMe?"cold_sent":"applied";
+  if(/interview|colloquio/i.test(subL))status="interview";
+  else if(/offer|offerta|congratulat|pleased to offer/i.test(subL))status="offer";
+  else if(/regret|unfortunately|not.*moving forward|not selected|rifiut|unsuccessful/i.test(subL))status="rejected";
+
+  let company="";
+  const skipD=["gmail","yahoo","hotmail","outlook","icloud","workday","greenhouse","lever","smartrecruiters","taleo","jobvite"];
+  if(!isMe&&fromDomain){const dp=fromDomain.split(".");const dn=dp.length>=2?dp[dp.length-2]:dp[0];if(!skipD.includes(dn)&&dn.length>2)company=dn.charAt(0).toUpperCase()+dn.slice(1);}
+  if(!company){const pats=[/(?:at|@|with|presso)\s+([A-Z][A-Za-z0-9\s&.\-]{2,35?})(?:\s+for|\s*[,\-]|$)/,/([A-Z][A-Za-z0-9\s&.\-]{2,35?})\s+(?:is pleased|has received|thank you|team|recruiting)/i,/application(?:\s+to|\s+for)\s+([A-Z][A-Za-z0-9\s&.\-]{2,35?})/i];for(const p of pats){const m=sub.match(p);if(m&&m[1]&&m[1].trim().length>2){company=m[1].trim();break;}}}
+  if(!company)return null;
+
+  let role="";
+  const rp=[/(?:position|role|ruolo)[:\s]+([A-Za-z0-9\s\-\/]{3,60?})(?:\s+at|\s*,|$)/i];
+  for(const p of rp){const m=sub.match(p);if(m&&m[1]&&m[1].trim().length>3){role=m[1].trim();break;}}
+
+  let contact="",cemail=isMe?"":fromEmail;
+  if(!isMe&&fromName&&fromName.split(/\s+/).length>=2&&!fromName.includes("@"))contact=fromName.slice(0,50);
+
+  return{company,role,contact,cemail,type,status,date};
+}
+
+// STATS & RENDER
+function updateStats(){
+  const co=DATA.companies;
+  document.getElementById("s-apps").textContent=co.filter(c=>c.type==="job_application").length;
+  document.getElementById("s-int").textContent=co.filter(c=>["interview","offer"].includes(c.status)).length;
+  document.getElementById("s-out").textContent=co.filter(c=>c.type==="cold_outreach").length;
+}
+
+function renderCards(){
+  const q=(document.getElementById("search-inp")?.value||"").toLowerCase();
+  const f=DATA.companies.filter(c=>(DATA.filter==="all"||c.type===DATA.filter)&&(!q||c.name.toLowerCase().includes(q)||(c.role||"").toLowerCase().includes(q))).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+  const wrap=document.getElementById("cards-wrap"),empty=document.getElementById("empty-state");
+  const mc=document.getElementById("meta-count");if(mc)mc.textContent=t("count",f.length);
+  if(!f.length){wrap.innerHTML="";empty.style.display="flex";document.getElementById("empty-t").textContent=q||DATA.filter!=="all"?t("noResults"):t("emptyT");document.getElementById("empty-s").textContent=t("emptyS");return;}
+  empty.style.display="none";
+  wrap.innerHTML=f.map(c=>{const s=ST[c.status]||ST.awaiting;return`<div class="company-card" onclick="openDet('${esc(c.id)}')"><div class="card-top"><div class="card-left"><div class="avatar" style="background:${s.ab};color:${s.af}">${c.name.charAt(0).toUpperCase()}</div><div style="min-width:0"><div class="card-name">${esc(c.name)}</div>${c.role?`<div class="card-role">${esc(c.role)}</div>`:""}</div></div><div class="status-badge" style="background:${s.bg};border:1px solid ${s.bc};color:${s.c}"><div class="badge-dot" style="background:${s.c}"></div>${t(c.status)}</div></div><div class="card-bottom"><span>${typeL(c.type)}${c.source==="gmail"?" · Gmail":""}</span><span>${c.date||""}</span></div></div>`;}).join("");
+}
+
+function typeL(tp){return t(tp==="job_application"?"typeJa":tp==="cold_outreach"?"typeCo":"typeRc");}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function updateBadge(){const b=document.getElementById("user-badge"),l=document.getElementById("user-lbl");if(DATA.userEmail&&tokenOK()){b.style.display="inline-flex";l.textContent=DATA.userEmail.split("@")[0];}else b.style.display="none";}
+
+function setFilter(f){DATA.filter=f;["all","ja","co","rc"].forEach(id=>document.getElementById("fp-"+id).classList.remove("active"));const m={all:"all",job_application:"ja",cold_outreach:"co",recruiter_contact:"rc"};document.getElementById("fp-"+(m[f]||f)).classList.add("active");renderCards();}
+
+function openDet(id){DATA.selectedId=id;renderDet();goTo("pg-detail");}
+function renderDet(){
+  const c=DATA.companies.find(x=>x.id===DATA.selectedId);if(!c)return;
+  const s=ST[c.status]||ST.awaiting;
+  const pills=Object.keys(ST).map(k=>{const sc=ST[k],on=c.status===k;return`<button onclick="changeStatus('${esc(c.id)}','${k}')" class="status-badge" style="cursor:pointer;background:${on?sc.bg:"transparent"};border:1px solid ${on?sc.bc:"var(--border2)"};color:${on?sc.c:"var(--muted)"};padding:6px 12px;font-size:11px">${t(k)}</button>`;}).join("");
+  document.getElementById("det-body").innerHTML=`<div class="detail-company-header"><div class="detail-avatar" style="background:${s.ab};color:${s.af}">${c.name.charAt(0).toUpperCase()}</div><div><div class="detail-name">${esc(c.name)}</div>${c.role?`<div class="detail-role">${esc(c.role)}</div>`:""}</div></div>${(c.contact||c.cemail)?`<div class="info-box" style="margin-bottom:14px">${c.contact?`<div class="info-row">👤 <span>${esc(c.contact)}</span></div>`:""} ${c.cemail?`<div class="info-row">✉ <span style="color:var(--accent)">${esc(c.cemail)}</span></div>`:""}</div>`:""}<div class="info-box" style="margin-bottom:14px"><div class="info-row">📋 <span>${typeL(c.type)}</span></div><div class="info-row">📅 <span>${c.date||"—"}</span></div>${c.emailCount?`<div class="info-row">📨 <span>${c.emailCount} email${c.emailCount>1?"s":""} in Gmail</span></div>`:""}</div><div class="section-label">Change status</div><div class="status-pills">${pills}</div><div class="section-label">Notes</div><textarea class="form-input" id="notes-ta" rows="5" placeholder="Interview prep, next steps…" oninput="saveNote('${esc(c.id)}',this.value)" style="margin-bottom:16px">${esc(c.notes||"")}</textarea><button class="btn btn-danger btn-full" onclick="delCo('${esc(c.id)}')">🗑 Delete company</button>`;
+}
+
+function changeStatus(id,status){DATA.companies=DATA.companies.map(c=>c.id===id?{...c,status,statusOverride:status}:c);save();updateStats();renderDet();}
+function saveNote(id,val){DATA.companies=DATA.companies.map(c=>c.id===id?{...c,notes:val}:c);save();}
+function delCo(id){if(!confirm("Delete this company?"))return;DATA.companies=DATA.companies.filter(c=>c.id!==id);save();updateStats();renderCards();goTo("pg-main");toast(t("toastDel"));}
+
+function submitManual(){
+  const name=document.getElementById("f-name").value.trim();
+  if(!name){document.getElementById("add-err").textContent="Company name is required.";return;}
+  document.getElementById("add-err").textContent="";
+  const c={id:"m_"+Date.now().toString(36),name,source:"manual",role:document.getElementById("f-role").value.trim(),contact:document.getElementById("f-cont").value.trim(),cemail:document.getElementById("f-cemail").value.trim(),type:document.getElementById("f-type").value,status:document.getElementById("f-status").value,date:document.getElementById("f-date").value||TODAY(),notes:document.getElementById("f-notes").value.trim()};
+  DATA.companies.push(c);save();["f-name","f-role","f-cont","f-cemail","f-notes"].forEach(id=>document.getElementById(id).value="");document.getElementById("f-date").value=TODAY();
+  goTo("pg-main");updateStats();renderCards();toast(t("toastAdded",c.name));
+}
+
+let parsedPrev=null;
+function parseEmail(){
+  const text=document.getElementById("parse-inp").value.trim();
+  if(!text){document.getElementById("parse-msg").textContent="Please paste email text first.";return;}
+  const full=text.toLowerCase();
+  let company="";
+  const cp=[/(?:at|with|presso)\s+([A-Z][A-Za-z0-9\s&.\-]{2,35?})(?:\s+for|\s*[,\-]|\s*
+|$)/,/([A-Z][A-Za-z0-9\s&.\-]{2,35?})\s+(?:is pleased|has received|thank you|team|recruiting)/i,/application(?:\s+to|\s+for)\s+([A-Z][A-Za-z0-9\s&.\-]{2,35?})/i];
+  for(const p of cp){const m=text.match(p);if(m&&m[1]&&m[1].trim().length>2){company=m[1].trim();break;}}
+  if(!company){const em=text.match(/[\w.\-+]+@([\w.\-]+\.[a-z]{2,})/);if(em){const d=em[1].split(".").slice(-2,-1)[0];if(d&&d.length>2&&!["gmail","yahoo","hotmail"].includes(d))company=d.charAt(0).toUpperCase()+d.slice(1);}}
+  let role="";const rp=[/(?:position|role)[:\s]+([A-Za-z0-9\s\-\/]{3,60?})(?:\s+at|\s*,|$)/i];for(const p of rp){const m=text.match(p);if(m&&m[1]&&m[1].trim().length>3){role=m[1].trim();break;}}
+  let cemail="";const emails=text.match(/[\w.\-+]+@[\w.\-]+\.[a-z]{2,}/g);if(emails)cemail=emails.find(e=>!["gmail","yahoo","hotmail","outlook"].some(x=>e.includes(x)))||emails[0]||"";
+  let status="applied";if(/interview|colloquio/i.test(full))status="interview";else if(/offer|offerta|congratulat/i.test(full))status="offer";else if(/regret|unfortunately|not selected|rifiut/i.test(full))status="rejected";else if(/cold|reach out|mi presento/i.test(full))status="cold_sent";
+  let type="job_application";if(/cold|reach out|mi presento/i.test(full))type="cold_outreach";else if(/recruiter|talent|headhunter/i.test(full))type="recruiter_contact";
+  let date=TODAY();const dm=text.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);if(dm){try{const d=new Date(`${dm[3]}-${dm[2].padStart(2,"0")}-${dm[1].padStart(2,"0")}`);if(!isNaN(d))date=d.toISOString().split("T")[0];}catch(e){}}
+  parsedPrev={name:company||"Unknown",role,cemail,type,status,date,contact:"",notes:"",source:"manual"};
+  const s=ST[status]||ST.awaiting;
+  document.getElementById("parse-prev").style.display="block";
+  document.getElementById("parse-prev").innerHTML=`<div class="parse-preview"><div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><div class="avatar" style="background:${s.ab};color:${s.af};width:40px;height:40px;font-size:17px">${parsedPrev.name.charAt(0).toUpperCase()}</div><div><div style="font-weight:500;font-size:14px">${esc(parsedPrev.name)}</div>${role?`<div style="font-size:12px;color:var(--muted)">${esc(role)}</div>`:""}</div></div>${cemail?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">✉ <span style="color:var(--accent)">${esc(cemail)}</span></div>`:""}<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px"><div class="status-badge" style="background:${s.bg};border:1px solid ${s.bc};color:${s.c}"><div class="badge-dot" style="background:${s.c}"></div>${t(status)}</div><span style="font-size:11px;color:var(--muted);align-self:center;font-family:var(--font-mono)">${date}</span></div><button class="btn btn-success btn-full" onclick="confirmParse()">✓ Add to tracker</button></div>`;
+  document.getElementById("parse-msg").textContent="✓ Extracted! Confirm below.";document.getElementById("parse-msg").style.color="var(--green)";
+}
+function confirmParse(){if(!parsedPrev)return;const c={id:"m_"+Date.now().toString(36),...parsedPrev};DATA.companies.push(c);save();updateStats();document.getElementById("parse-inp").value="";document.getElementById("parse-prev").style.display="none";document.getElementById("parse-msg").textContent="";parsedPrev=null;goTo("pg-main");renderCards();toast(t("toastAdded",c.name));}
+
+function toggleLang(){DATA.lang=DATA.lang==="en"?"it":"en";save();applyLang();renderCards();updateStats();}
+function applyLang(){
+  const l=DATA.lang,L=LNG[l];
+  document.getElementById("lang-btn").textContent=L.langBtn;
+  document.getElementById("sync-btn").textContent=L.syncBtn;
+  document.getElementById("fp-all").textContent=L.all;document.getElementById("fp-ja").textContent=L.ja;document.getElementById("fp-co").textContent=L.co;document.getElementById("fp-rc").textContent=L.rc;
+}
+
+function refreshSettings(){document.getElementById("set-email").textContent=DATA.userEmail||"Not connected";document.getElementById("set-cid").textContent=DATA.clientId?DATA.clientId.slice(0,18)+"…":"Not set";document.getElementById("set-sync").textContent=DATA.lastSync||"Never";}
+function disconnectGmail(){if(!confirm("Disconnect Gmail?"))return;DATA.accessToken="";DATA.tokenExpiry=0;DATA.userEmail="";DATA.companies=DATA.companies.filter(c=>c.source!=="gmail");save();updateBadge();updateStats();renderCards();toast(t("toastDisc"));}
+function exportData(){const b=new Blob([JSON.stringify({companies:DATA.companies,exportedAt:new Date().toISOString()},null,2)],{type:"application/json"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="apptrack-"+TODAY()+".json";a.click();URL.revokeObjectURL(u);toast(t("toastExp"));}
+function clearAll(){if(!confirm("Delete ALL data? Cannot be undone."))return;DATA.companies=[];DATA.lastSync="";save();updateStats();renderCards();goTo("pg-main");toast(t("toastClear"));}
+
+let toastT;
+function toast(msg){const el=document.getElementById("toast");el.textContent=msg;el.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("show"),2500);}
+
+// PARSE PREVIEW CSS (inject)
+const style=document.createElement("style");
+style.textContent=`.parse-preview{background:var(--surface);border:1px solid var(--accent-border);border-radius:var(--radius);padding:15px;margin-bottom:10px}.divider{height:1px;background:var(--border);margin:16px 0}.section-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:9px}.info-row{display:flex;align-items:center;gap:8px;color:var(--muted);padding:3px 0}.info-row span{color:var(--text)}.detail-company-header{display:flex;align-items:center;gap:12px;margin-bottom:18px}.detail-avatar{width:50px;height:50px;border-radius:12px;font-family:var(--font-head);font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}.detail-name{font-family:var(--font-head);font-size:17px;font-weight:700}.detail-role{font-size:13px;color:var(--muted);margin-top:2px}.status-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}`;
+document.head.appendChild(style);
+
+// INIT
+load();
+const urlP=new URLSearchParams(location.search);
+if(urlP.has("code")||urlP.has("error")){handleCallback();}
+else{
+  document.getElementById("f-date").value=TODAY();
+  applyLang();
+  if(DATA.companies.length>0||DATA.clientId){goTo("pg-main");updateStats();renderCards();updateBadge();if(tokenOK())setTimeout(()=>doSync(),1500);}
+}
+</script>
+</body>
+</html>
